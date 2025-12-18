@@ -1,3 +1,20 @@
+#import faulthandler
+#faulthandler.dump_traceback_later(5, repeat=True)
+
+#import sys
+
+#def trace_calls(frame, event, arg):
+#    if event == "call":
+#        code = frame.f_code
+#        if not code.co_name == "Snapshot": return trace_calls
+#        print(f'CALL: {code.co_name}({code.co_filename}:{code.co_firstlineno})')
+#    elif event == "return":
+#        code = frame.f_code
+#        if not code.co_name == "Snapshot": return trace_calls
+#        print(f'RETURN: {code.co_name}({code.co_filename}:{code.co_firstlineno})')
+#    return trace_calls
+
+
 from TIMBER.Analyzer import *
 from TIMBER.Tools.Common import *
 
@@ -55,7 +72,7 @@ import gc
 
 gc.disable()
 
-#from TIMBER.Tools.RestFramesHandler import load_restframes
+from TIMBER.Tools.RestFramesHandler import load_restframes
 import correctionlib
 correctionlib.register_pyroot_binding()
 
@@ -179,9 +196,13 @@ ROOT.gInterpreter.ProcessLine('#include "TString.h"')
 ROOT.ROOT.EnableImplicitMT(num_threads)
 
 # load rest frames handler
-#handler_name = 'Bprime_handler.cc'
-#class_name = 'gc_Container'
-#load_restframes(num_threads, handler_name, class_name, 'rfc')
+handler_name = 'Bprime_handler_new.cc'
+class_name = 'Bprime_RestFrames_Container_new'
+load_restframes(num_threads, handler_name, class_name, 'B_rfc')
+
+#CompileCpp('bin/restframes/helper.cc')
+# Essentially just called return doubles
+# Now we implement directly
 
 # ------------------ Important Variables ------------------
 debug = False
@@ -508,7 +529,7 @@ def analyze(jesvar):
   lVars.Add("hasBosonishMass", "hasBosonishMfunc(Good4Lepton_pt, Good4Lepton_eta, Good4Lepton_phi, Good4Lepton_mass, Good4Lepton_ID, Good4Lepton_charge)")
 
   lCuts = CutGroup('Lepton Cuts')
-  lCuts.Add('NgoodLeptons >= 3', 'NgoodLeptons >= 3')
+  lCuts.Add('NgoodLeptons >= 4', 'NgoodLeptons >= 4')
   lCuts.Add('hasBosonishMass == 0', 'hasBosonishMass == 0')
   #lCuts.Add('NgoodLeptons >= 4', 'NgoodLeptons >= 4')
  
@@ -755,16 +776,34 @@ def analyze(jesvar):
 
 
   # # ------------------ Results ------------------
-  # # rframeVars = VarGroup('restFrameVars')
-  # # rframeVars.Add('VLQ_mass', 'rfc.compute_mass(rdfslot_, lepton_pt, lepton_eta, lepton_phi, lepton_mass, gcFatJet_pt, gcFatJet_eta, gcFatJet_phi, gcFatJet_mass, MET_pt, MET_phi)')
-  # # rframeVars.Add('VLQ_mass_T', 'VLQ_mass[0]')
-  # # rframeVars.Add('VLQ_mass_Tbar', 'VLQ_mass[1]')
-  # # rframeVars.Add('VLQ_mass_T_r', 'VLQ_mass[2]')
-  # # rframeVars.Add('VLQ_mass_Tbar_r', 'VLQ_mass[3]')
-  # # rframeVars.Add('VLQ_mass_ratio', 'VLQ_mass_T/VLQ_mass_Tbar')
-  # # rframeVars.Add('VLQ_mass_avg', '(VLQ_mass_T+VLQ_mass_Tbar)*0.5')
+  rframeVars = VarGroup('restFrameVars')
   
-  
+  #print('\n\n\nrframeVars Group made about to .add everything\n\n\n')
+
+  rframeVars.Add('VLQ', 'B_rfc.return_doubles(rdfslot_, Good4Lepton_pt, Good4Lepton_eta, Good4Lepton_phi, Good4Lepton_mass, Good4Lepton_charge, gcBJet_pt, gcBJet_eta, gcBJet_phi, gcBJet_mass, MET_pt, MET_phi)')
+  rframeVars.Add('VLQ_BBbar_mass', 'VLQ[0]')
+  rframeVars.Add('VLQ_BBbar_cosDecayAngle', 'VLQ[1]')
+  rframeVars.Add('VLQ_BBbar_deltaPhiDecayAngle', 'VLQ[2]')
+  rframeVars.Add('VLQ_B_mass', 'VLQ[3]')
+  rframeVars.Add('VLQ_B_cosDecayAngle', 'VLQ[4]')
+  rframeVars.Add('VLQ_B_deltaPhiDecayAngle', 'VLQ[5]')
+  rframeVars.Add('VLQ_Bbar_mass', 'VLQ[6]')
+  rframeVars.Add('VLQ_Bbar_cosDecayAngle', 'VLQ[7]')
+  rframeVars.Add('VLQ_Bbar_deltaPhiDecayAngle', 'VLQ[8]')
+  rframeVars.Add('VLQ_tau11_mass', 'VLQ[9]')
+  rframeVars.Add('VLQ_tau12_mass', 'VLQ[10]')
+  rframeVars.Add('VLQ_tau21_mass', 'VLQ[11]')
+  rframeVars.Add('VLQ_tau22_mass', 'VLQ[12]')
+  rframeVars.Add('VLQ_BBbar_DeltaPhiVisible', 'VLQ[13]')
+  rframeVars.Add('VLQ_BBbar_DeltaPhiDecayVisible', 'VLQ[14]')
+  rframeVars.Add('VLQ_BBbar_DeltaPhiBoostVisible', 'VLQ[15]')
+  rframeVars.Add('VLQ_BBbar_VisibleShape', 'VLQ[16]')
+  rframeVars.Add('VLQ_tau11_Charge', 'VLQ[17]')
+  rframeVars.Add('VLQ_tau12_Charge', 'VLQ[18]')
+  rframeVars.Add('VLQ_tau21_Charge', 'VLQ[19]')
+  rframeVars.Add('VLQ_tau22_Charge', 'VLQ[20]')
+
+
   # # -------------------------------------
 
   nodeToPlot = a.Apply([flagCuts, gjsonVars, gjsonCuts, tVars, eandmuVars, lVars, lCuts, TrigVars])
@@ -789,7 +828,7 @@ def analyze(jesvar):
   a.SetActiveNode(newNode)
   if isSig:
       a.Apply([recoGenVars])
-  a.Apply([jCuts, metVars, manualVars, tCuts, metCuts, lepSFs, TrigCuts])  #,  testCuts, rframeVars
+  a.Apply([jCuts, metVars, manualVars, tCuts, metCuts, lepSFs, TrigCuts, rframeVars])  #,  testCuts, rframeVars
   
   allColumns = a.GetColumnNames()
   
@@ -846,9 +885,10 @@ def analyze(jesvar):
   mode = 'RECREATE'
   if jesvar != "Nominal":
     mode = 'UPDATE'
-   
+  #print('\n(1)\n') 
+  #sys.setprofile(trace_calls)
   a.Snapshot(columns, finalFile, "Events_"+jesvar, lazy=False, openOption=mode, saveRunChain=True)
-    
+  #print('\n(2)\n')
   if jesvar == "Nominal":
     print("Cut statistics:")
     rep = a.DataFrame.Report()
